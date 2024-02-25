@@ -1,0 +1,191 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "description": "AAST Graduation Project",
+        "version": "1.0.0",
+        "title": "Reconstructing 3D Facial Models from Textual Descriptions",
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "components": {
+        "schemas": {
+            "ImageRetrieve": {
+                "type": "object",
+                "properties": {
+                    "img path": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Id": {
+                "type": "integer",
+                "properties": {
+                    "name": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "update": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "completed": {
+                        "type": "boolean"
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/api/getimage/{img_id}": {
+            "get": {
+                "tags": [
+                    "Getting image path from server"
+                ],
+                "summary": "Retrieve image",
+                "parameters": [
+                    {
+                        "name": "img_id",
+                        "in": "path",
+                        "description": "img id to retrieve",
+                        "required": true,
+                        "type": "integer",
+                        "schema": {
+                            "$ref": "#/components/schemas/ImageRetrieve"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/components/schemas/ImageRetrieve"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/components/schemas/ImageRetrieve"
+                        }
+                    }
+                }
+            }
+        },
+        "/todolist/{id}": {
+            "get": {
+                "tags": [
+                    "Get todos from API"
+                ],
+                "summary": "Get todos",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "todo id to update",
+                        "required": true,
+                        "type": "integer",
+                        "schema": {
+                            "$ref": "#/components/schemas/Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/components/schemas/TodoList"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/components/schemas/TodoList"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Update todos on API"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "todo id to update",
+                        "required": true,
+                        "type": "integer",
+                        "schema": {
+                            "$ref": "#/components/schemas/Id"
+                        }
+                    }
+                ],
+                "summary": "Update Todo",
+                "requestBody": {
+                    "description": "Update Existing todo On Database",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/update"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/components/schemas/TodoList"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/components/schemas/TodoList"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Delete todo to API"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "product id to delete",
+                        "required": true,
+                        "type": "integer",
+                        "schema": {
+                            "$ref": "#/components/schemas/Id"
+                        }
+                    }
+                ],
+                "summary": "Delete todo",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/components/schemas/TodoList"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/components/schemas/TodoList"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

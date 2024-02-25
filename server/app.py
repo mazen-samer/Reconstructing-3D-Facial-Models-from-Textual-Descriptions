@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_restful import Api, Resource
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from flask_swagger_ui import get_swaggerui_blueprint
 
 
 app = Flask(__name__, static_url_path='/static')
@@ -10,6 +11,15 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:password@localhos
 db = SQLAlchemy(app)
 CORS(app)
 
+# SWAGGER SETUP
+swagger_blueprint = get_swaggerui_blueprint(
+    "/swagger",
+    "/static/swagger.json",
+    config={"app_name": "Graduation Project API"}
+)
+app.register_blueprint(swagger_blueprint, url_prefix='/swagger')
+
+# MODELS
 class People(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(50))
