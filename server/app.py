@@ -3,21 +3,28 @@ from flask_restful import Api, Resource
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_swagger_ui import get_swaggerui_blueprint
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
+SWAGGER_URL = os.getenv('SWAGGER_URL')
+SWAGGER_LOCAL_PATH = os.getenv('SWAGGER_LOCAL_PATH')
 
 app = Flask(__name__, static_url_path='/static')
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:password@localhost/Grad-project"
+app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
 
 db = SQLAlchemy(app)
 CORS(app)
 
 # SWAGGER SETUP
 swagger_blueprint = get_swaggerui_blueprint(
-    "/swagger",
-    "/static/swagger.json",
+    SWAGGER_URL,
+    SWAGGER_LOCAL_PATH,
     config={"app_name": "Graduation Project API"}
 )
-app.register_blueprint(swagger_blueprint, url_prefix='/swagger')
+app.register_blueprint(swagger_blueprint, url_prefix=SWAGGER_URL)
 
 # MODELS
 class People(db.Model):
