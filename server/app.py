@@ -1,24 +1,24 @@
-from flask import Flask, request, jsonify, send_from_directory
-from flask_restful import Api, Resource
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 from flask_swagger_ui import get_swaggerui_blueprint
 import os
 from dotenv import load_dotenv
+from models import *
 
+# Import vnv Variables 
 load_dotenv()
-
 SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
 SWAGGER_URL = os.getenv('SWAGGER_URL')
 SWAGGER_LOCAL_PATH = os.getenv('SWAGGER_LOCAL_PATH')
 
+# Starting the server app
 app = Flask(__name__, static_url_path='/static')
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
 
-db = SQLAlchemy(app)
 CORS(app)
+db.init_app(app)
 
-# SWAGGER SETUP
+# Swagger setup
 swagger_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     SWAGGER_LOCAL_PATH,
@@ -26,15 +26,7 @@ swagger_blueprint = get_swaggerui_blueprint(
 )
 app.register_blueprint(swagger_blueprint, url_prefix=SWAGGER_URL)
 
-# MODELS
-class People(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
-    name = db.Column(db.String(50))
-    ssn = db.Column(db.String(100))
-    dob = db.Column(db.Date)
-
-
-
+# Routes
 @app.route("/api/getimage/<int:img_id>", methods=["GET"])
 def test(img_id):
     image_path = f"static/imgs/img-{img_id}.png"
@@ -46,7 +38,7 @@ def testmodel(obj_id):
 
 @app.route("/api/getallpeople")
 def getallpeople():
-    people = People.query.all()
+    people = Employee.query.all()
     print(people[0].name)
     people_list = []
     for person in people:
