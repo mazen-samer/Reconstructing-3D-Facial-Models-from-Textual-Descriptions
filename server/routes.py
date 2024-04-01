@@ -19,7 +19,7 @@ def configure_routes(app):
     @app.route("/api/generateImage", methods=["POST"])
     def generateImage():
         try:
-            generator.generate_img(request.json["prompt"], request.form["id"])
+            generator.generate_img(request.json["prompt"], request.json["img-id"])
         except Exception as e:
             return jsonify({"error": str(e)}), 500
         return jsonify({"success": True})

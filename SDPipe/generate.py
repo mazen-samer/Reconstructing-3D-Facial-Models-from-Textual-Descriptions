@@ -2,16 +2,16 @@ from diffusers import StableDiffusionPipeline
 import PIL.Image
 # import torch
 
-# model_id = "runwayml/stable-diffusion-v1-5"
 
 
 def generate_img(prompt: str, id: str):
+    model_id = "runwayml/stable-diffusion-v1-5"
     pipe = StableDiffusionPipeline.from_pretrained(
-        './stable-diffusion-v1-4', revision="fp16")
+        model_id, revision="fp16")
     pipe = pipe.to('cpu')
 
     image: PIL.Image.Image = pipe(prompt).images[0]
-    image.save("demo.png", fp=f"../server/static/generated/{id}")
+    image.save(fp=f"../server/static/generated/{id}.png")
 
 
 if __name__ == "__main__":
