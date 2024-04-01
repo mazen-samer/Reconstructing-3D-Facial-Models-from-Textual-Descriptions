@@ -11,9 +11,9 @@ def generate_img(prompt: str, id: str):
     pipe = pipe.to('cpu')
 
     image: PIL.Image.Image = pipe(prompt).images[0]
-    image.save(fp=f"../server/static/generated/{id}.png")
+    image.save(f"{id}.png")
 
 
 if __name__ == "__main__":
     prompt = "a photo of a man with beard and bald"
-    generate_img(prompt, "demo")
+    generate_img(prompt, "demo2")
