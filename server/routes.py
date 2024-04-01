@@ -1,5 +1,9 @@
-from flask import jsonify, send_from_directory
+
+from flask import jsonify, send_from_directory, request
 from models import *
+
+# importing module
+import SDPipe.generate as generator
 
 def configure_routes(app):
     # Routes
@@ -11,6 +15,14 @@ def configure_routes(app):
     @app.route("/static/3dobjs/<int:obj_id>")
     def testmodel(obj_id):
         return send_from_directory("static/3dobjs", f"3dobj-{obj_id}.obj")
+
+    @app.route("/api/generateImage", methods=["POST"])
+    def generateImage():
+        try:
+            generator.generate_img(request.json["prompt"], request.form["id"])
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        return jsonify({"success": True})
 
     @app.route("/api/getallpeople")
     def getallpeople():
