@@ -1,7 +1,9 @@
+
 from flask import jsonify, send_from_directory, request
 from models import *
-from SDPipe import generate_img
 
+# importing module
+import SDPipe.generate as generator
 
 def configure_routes(app):
     # Routes
@@ -17,7 +19,7 @@ def configure_routes(app):
     @app.route("/api/generateImage", methods=["POST"])
     def generateImage():
         try:
-            generate_img(request.json["prompt"], request.form["id"])
+            generator.generate_img(request.json["prompt"], request.form["id"])
         except Exception as e:
             return jsonify({"error": str(e)}), 500
         return jsonify({"success": True})
