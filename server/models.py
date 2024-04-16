@@ -12,8 +12,8 @@ class Employee(db.Model):
     dob = Column(Date)
     
     # Relationship with Suspect
-    suspects = relationship("Suspect", back_populates="employee")
-    testimonials = relationship("Testimonial", back_populates="employee")
+    # suspects = relationship("Suspect", back_populates="employee")
+    # testimonials = relationship("Testimonial", back_populates="employee")
 
 class Suspect(db.Model):
     __tablename__ = 'Suspects'
@@ -21,8 +21,8 @@ class Suspect(db.Model):
     employee_id = Column(Integer, ForeignKey('Employees.id'))
     
     # Define relationship with Employees
-    employee = relationship("Employee", back_populates="suspects")
-    testimonials = relationship("Testimonial", back_populates="suspect")
+    # employee = relationship("Employee", back_populates="suspects")
+    # testimonials = relationship("Testimonial", back_populates="suspect")
 
 class Incident(db.Model):
     __tablename__ = 'Incidents'
@@ -32,7 +32,7 @@ class Incident(db.Model):
     date = Column(Date)
 
     # Define relationship with Testimonial
-    testimonials = relationship("Testimonial", back_populates="incident")
+    # testimonials = relationship("Testimonial", back_populates="incident")
 
 class Testimonial(db.Model):
     __tablename__ = 'Testimonials'
@@ -43,6 +43,6 @@ class Testimonial(db.Model):
     testimonial_text = Column(String(150))
 
     # Define relationships with other tables
-    incident = relationship("Incident", back_populates="testimonials")
-    employee = relationship("Employee", back_populates="testimonials")
-    suspect = relationship("Suspect", back_populates="testimonials")
+    # incident = relationship("Incident", back_populates="testimonials")
+    # employee = relationship("Employee", back_populates="testimonials")
+    # suspect = relationship("Suspect", back_populates="testimonials")

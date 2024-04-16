@@ -34,6 +34,9 @@ export default function Sidebar() {
           <Typography fontSize="18px" fontWeight="bold" padding="5px 20px">
             Employees' Affairs
           </Typography>
+          <MenuItem component={<NavLink to="/addemployee" />}>
+            Add Employee
+          </MenuItem>
           <MenuItem component={<NavLink to="/viewall" />}>
             View Employees
           </MenuItem>

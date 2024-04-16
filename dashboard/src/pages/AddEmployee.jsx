@@ -3,7 +3,7 @@ import { Box, TextField, Button } from "@mui/material";
 import Navbar from "../components/Navbar";
 import { useForm } from "react-hook-form";
 
-export default function AddCase() {
+export default function AddEmployee() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -16,7 +16,7 @@ export default function AddCase() {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const request = await fetch("http://127.0.0.1:5000/api/addcase", {
+      const request = await fetch("http://127.0.0.1:5000/api/addemployee", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -25,9 +25,6 @@ export default function AddCase() {
       });
       const response = await request.json();
       setMessage(response.message);
-      if (response.error) {
-        console.error(response.error);
-      }
       setIsLoading(false);
       reset();
     } catch (e) {
@@ -39,8 +36,8 @@ export default function AddCase() {
   return (
     <Box>
       <Navbar
-        header="Add Case"
-        subheader="Where you add a case to begin its investigation."
+        header="Add Employee"
+        subheader="Where you add an employee to the system."
       />
       <Box margin="20px">
         {message !== "" && <p style={{ color: "red" }}>{message}</p>}
@@ -55,7 +52,7 @@ export default function AddCase() {
             <TextField
               error={errors.name?.message ? true : false}
               id="standard-basic"
-              label="Case Title"
+              label="Employee Name"
               variant="standard"
               sx={{
                 height: 50,
@@ -66,31 +63,30 @@ export default function AddCase() {
               helperText={errors.name?.message}
             />
             <TextField
-              error={errors.description?.message ? true : false}
-              id="outlined-multiline-static"
-              label="Case Description"
-              multiline
-              rows={4}
+              error={errors.ssn?.message ? true : false}
+              id="standard-basic"
+              label="Employee SSN"
+              variant="standard"
               sx={{
-                width: 500,
+                height: 50,
               }}
-              {...register("description", {
-                required: "Please enter a description!",
+              {...register("ssn", {
+                required: "Please enter a valid ssn!",
               })}
-              helperText={errors.description?.message}
+              helperText={errors.ssn?.message}
             />
             <input
               style={{ fontSize: 20 }}
               type="date"
-              {...register("date", {
+              {...register("dob", {
                 required: "Please enter a date",
               })}
             />
-            {errors.date?.message && (
-              <p style={{ color: "red" }}>{errors.date?.message}</p>
+            {errors.dob?.message && (
+              <p style={{ color: "red" }}>{errors.dob?.message}</p>
             )}
             <Button type="submit" variant="outlined">
-              Add Case
+              Add Employee
             </Button>
           </Box>
         </form>

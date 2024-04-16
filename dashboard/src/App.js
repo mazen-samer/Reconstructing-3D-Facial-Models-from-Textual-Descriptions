@@ -5,6 +5,8 @@ import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import AddCase from "./pages/AddCase";
 import ViewEmployees from "./pages/ViewEmployees";
+import AssignCase from "./pages/AssignCase";
+import AddEmployee from "./pages/AddEmployee";
 
 function App() {
   return (
@@ -16,7 +18,9 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/addcase" element={<AddCase />} />
+              <Route path="/addemployee" element={<AddEmployee />} />
               <Route path="/viewall" element={<ViewEmployees />} />
+              <Route path="/assign/:id" element={<AssignCase />} />
             </Routes>
           </Box>
         </Box>
