@@ -36,6 +36,7 @@ export default function AddCase() {
       setMessage("Something went wrong with the server");
     }
   };
+
   return (
     <Box>
       <Navbar
