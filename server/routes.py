@@ -1,6 +1,7 @@
 
 from flask import jsonify, send_from_directory, request
 from models import *
+from datetime import datetime
 
 # importing module
 import SDPipe.generate as generator
@@ -9,35 +10,45 @@ def configure_routes(app):
     # Routes
     @app.route("/api/getimage/<int:img_id>", methods=["GET"])
     def test(img_id):
-        image_path = f"static/imgs/img-{img_id}.png"
-        return jsonify({"img": image_path})
+        try:
+            image_path = f"static/imgs/img-{img_id}.png"
+            return jsonify({"img": image_path, "status": "success"}), 200
+        except Exception as e:
+            return ({"message": str(e), "status": "failed"})
 
     @app.route("/static/3dobjs/<int:obj_id>")
     def testmodel(obj_id):
-        return send_from_directory("static/3dobjs", f"3dobj-{obj_id}.obj")
+        try:
+            return send_from_directory("static/3dobjs", f"3dobj-{obj_id}.obj")
+        except Exception as e:
+            return ({"message": str(e), "status": "failed"})
 
     @app.route("/api/generateImage", methods=["POST"])
     def generateImage():
         try:
             generator.generate_img(request.json["prompt"], f"./server/static/generated/{request.json['img-id']}")
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
-        return jsonify({"success": True})
+            return jsonify({"error": str(e), "status": "failed"}), 500
+        return jsonify({"status": "success", "message": "Image generated"})
 
     @app.route("/api/getallpeople")
     def getallpeople():
-        people = Employee.query.all()
-        people_list = []
-        for person in people:
-            person_data = {
-                'id': person.id,
-                'name': person.name,
-                'ssn': person.ssn,
-                'dob': person.dob
-            }
-            people_list.append(person_data)
-        return jsonify(people_list)
-    
+        try:
+            people = Employee.query.all()            
+            people_list = []
+            for person in people:
+                person_data = {
+                    'id': person.id,
+                    'name': person.name,
+                    'ssn': person.ssn,
+                    'dob': person.dob
+                }
+                people_list.append(person_data)
+            
+            return jsonify({"status": "success", "data":people_list})
+        
+        except Exception as e:
+            return jsonify({"message": str(e), "status": "failed"}), 500  # Return error message and set HTTP status code to 500
 
     @app.route("/api/findemployee/<ssn>", methods=["GET"])
     def findemployee(ssn):
@@ -74,10 +85,157 @@ def configure_routes(app):
     def addcase():
         data = request.json
         try:
-            new_case = Incident(description=data["description"], name=data["name"], date=data["date"])
+            new_case = Incident(description=data["description"], title=data["title"], date=data["date"])
             db.session.add(new_case)
             db.session.commit()
         except Exception as e:
             return jsonify({"status":"failed", "message":"Failed to add case", "error":str(e)})
         return jsonify({"status":"success", "message": "Case added successfully!"})
 
+
+    # NEW CORE ROUTES
+    @app.route("/api/assign", methods=['POST'])
+    def assign_employee_to_incident():
+        try:
+            # Extract employee_id and incident_id from the request JSON
+            data = request.json
+            employee_id = data.get('employee_id')
+            incident_id = data.get('incident_id')
+
+            # Query the Employee and Incident records based on their IDs
+            employee = Employee.query.get(employee_id)
+            incident = Incident.query.get(incident_id)
+
+            if not employee or not incident:
+                raise ValueError("Employee or Incident not found")
+
+            # Create a new Assigned record with the assigned_at attribute set to the current date and time
+            assigned_at = datetime.now()
+            assignment = Assigned(employee_id=employee_id, incident_id=incident_id, assigned_at=assigned_at)
+            db.session.add(assignment)
+            db.session.commit()
+
+            return jsonify({"message": "Employee assigned to incident successfully", "status":"success"}), 200
+
+        except Exception as e:
+            db.session.rollback()  # Rollback the transaction in case of error
+            return jsonify({"message": str(e), "status": "failed"}), 400  # Return error message and set HTTP status code to 400
+        
+    @app.route("/api/incidents", methods=['GET'])
+    def get_all_incidents():
+        try:
+            # Query all incidents from the database
+            incidents = Incident.query.all()
+
+            # Serialize the incidents to JSON
+            serialized_incidents = []
+            for incident in incidents:
+                serialized_incident = {
+                    'id': incident.id,
+                    'title': incident.title,
+                    'description': incident.description,
+                    'date': incident.date.strftime('%Y-%m-%d')  # Format date as string
+                }
+                serialized_incidents.append(serialized_incident)
+
+            # Return the serialized incidents as JSON response
+            return jsonify({"status": "success", "data": serialized_incidents})
+
+        except Exception as e:
+            return jsonify({"message": str(e), "status": "failed"}), 500  # Return error message and set HTTP status code to 500 for internal server error
+    
+    # available incident to assign for a specific employee
+    @app.route("/api/available_incidents/<int:employee_id>", methods=['GET'])
+    def get_available_incidents_for_employee(employee_id):
+        try:
+            # Query the employee to ensure it exists
+            employee = Employee.query.get(employee_id)
+            if not employee:
+                return jsonify({"message": "Employee not found", "status": "failed"}), 404
+
+            # Query all incidents that haven't been assigned to the specific employee
+            available_incidents = Incident.query.filter(
+                ~Incident.id.in_([assignment.incident_id for assignment in Assigned.query.filter_by(employee_id=employee_id)])
+            ).all()
+
+            # Serialize the available incidents to JSON
+            serialized_incidents = []
+            for incident in available_incidents:
+                serialized_incident = {
+                    'id': incident.id,
+                    'title': incident.title,
+                    'description': incident.description,
+                    'date': incident.date.strftime('%Y-%m-%d')  # Format date as string
+                }
+                serialized_incidents.append(serialized_incident)
+
+            # Return the serialized available incidents as JSON response
+            return jsonify({"status": "success", "data": serialized_incidents}), 200
+
+        except Exception as e:
+            return jsonify({"message": str(e), "status": "failed"}), 500  # Return error message and set HTTP status code to 500 for internal server error
+        
+    @app.route("/api/unassign", methods=['POST'])
+    def unassign_incident():
+        try:
+            # Extract incident_id and employee_id from the request JSON
+            data = request.json
+            employee_id = data.get('employee_id')
+            incident_id = data.get('incident_id')
+
+            # Query the assignment to ensure it exists
+            assignment = Assigned.query.filter_by(employee_id=employee_id, incident_id=incident_id).first()
+            if not assignment:
+                return jsonify({"message": "Assignment not found", "status": "failed"}), 404
+
+            # Delete the assignment
+            db.session.delete(assignment)
+            db.session.commit()
+
+            return jsonify({"message": "Assignment removed successfully", "status": "success"}), 200
+
+        except Exception as e:
+            db.session.rollback()  # Rollback the transaction in case of error
+            return jsonify({"message": str(e), "status": "failed"}), 400  # Return error message and set HTTP status code to 400
+        
+    @app.route("/api/last_assigned_case/<ssn>", methods=['GET'])
+    def get_last_assigned_case(ssn):
+        try:
+            # Query the employee based on SSN
+            employee = Employee.query.filter_by(ssn=ssn).first()
+            if not employee:
+                return jsonify({"message": "Employee not found", "status": "failed"}), 404
+
+            # Query the last assigned case for the employee based on their ID
+            last_assignment = Assigned.query.filter_by(employee_id=employee.id).order_by(Assigned.assigned_at.desc()).first()
+            if not last_assignment:
+                return jsonify({"message": "No assignments found for this employee", "status": "failed"}), 404
+
+            # Get the incident details for the last assignment
+            incident = Incident.query.get(last_assignment.incident_id)
+
+            # Serialize the employee details
+            serialized_employee = {
+                'id': employee.id,
+                'name': employee.name,
+                'ssn': employee.ssn,
+                # Include other employee details as needed
+            }
+
+            # Serialize the incident details
+            serialized_incident = {
+                'id': incident.id,
+                'title': incident.title,
+                'description': incident.description,
+                'date': incident.date.strftime('%Y-%m-%d')  # Format date as string
+            }
+
+            # Return the serialized employee and incident details as JSON response
+            return jsonify({
+                "status": "success",
+                "employee": serialized_employee,
+                "incident": serialized_incident
+            })
+
+        except Exception as e:
+            return jsonify({"error": str(e), "status": "failed"}), 500  # Return error message and set HTTP status code to 500 for internal server error

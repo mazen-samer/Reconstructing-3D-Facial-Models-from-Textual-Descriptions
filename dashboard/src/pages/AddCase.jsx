@@ -54,17 +54,17 @@ export default function AddCase() {
             alignItems="flex-start"
           >
             <TextField
-              error={errors.name?.message ? true : false}
+              error={errors.title?.message ? true : false}
               id="standard-basic"
               label="Case Title"
               variant="standard"
               sx={{
                 height: 50,
               }}
-              {...register("name", {
-                required: "Please enter a name!",
+              {...register("title", {
+                required: "Please enter a title!",
               })}
-              helperText={errors.name?.message}
+              helperText={errors.title?.message}
             />
             <TextField
               error={errors.description?.message ? true : false}
