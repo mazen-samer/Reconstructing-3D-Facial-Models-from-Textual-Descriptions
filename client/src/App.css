@@ -1,0 +1,7 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap");
+.App {
+  background-image: url("./assets/bg.png");
+  background-position: center;
+  background-size: cover;
+  min-height: 100vh;
+}
