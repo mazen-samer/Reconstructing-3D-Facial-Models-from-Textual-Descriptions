@@ -1,13 +1,14 @@
+import os
 from diffusers import StableDiffusionPipeline
 import PIL.Image
 # import torch
 
-
-
 def generate_img(prompt: str, id: str):
-    model_id = "runwayml/stable-diffusion-v1-5"
+    model_id = "../SDPipe/stable-diffusion-v1-4"
+    if not os.path.isdir(model_id):
+        raise Exception("aaaaaaaaaaaaaaaaaa")
     pipe = StableDiffusionPipeline.from_pretrained(
-        model_id, revision="fp16")
+        model_id, variant='fp16', local_files_only=True)
     pipe = pipe.to('cpu')
 
     image: PIL.Image.Image = pipe(prompt).images[0]
