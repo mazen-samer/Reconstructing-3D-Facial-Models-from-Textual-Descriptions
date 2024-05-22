@@ -84,7 +84,7 @@ export default function ViewEmployees() {
         <Box padding="20px" marginTop="20px">
           {isLoading && <CircularProgress />}
           {!isLoading && serverErr && (
-            <p>Something went wrong in the server!</p>
+            <p>There was an error talking to our server</p>
           )}
 
           {isEmpty ? (

@@ -5,24 +5,33 @@ import {
   Select,
   MenuItem,
   Divider,
-  Button,
   FormControl,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useParams } from "react-router-dom";
 import { baseUrl } from "../constants/baseUrl";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AssignCase() {
   const { id } = useParams();
   const [employee, setEmployee] = useState({});
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [unAssignLoading, setUnAssignLoading] = useState(false);
   const [availableIncidents, setAvailableIncidents] = useState([]);
   const [availableIncident, setAvailableIncident] = useState("");
   const [assignedIncidents, setAssignedIncidents] = useState([]);
   const [assignedIncident, setAssignedIncident] = useState("");
-  const [assignMsg, setAssignMsg] = useState("");
-  const [unAssignMsg, setUnAssignMsg] = useState("");
   const [message, setMessage] = useState("");
+
+  const showToastError = (message) => {
+    toast.error(message);
+  };
+  const showToastSuccess = (message) => {
+    toast.success(message);
+  };
 
   const handleChange = (event) => {
     setAvailableIncident(event.target.value);
@@ -89,6 +98,7 @@ export default function AssignCase() {
 
   const handleAssign = async (e) => {
     e.preventDefault();
+    setAssignLoading(true);
     try {
       let request = await fetch(`${baseUrl}/api/assign`, {
         method: "POST",
@@ -102,7 +112,8 @@ export default function AssignCase() {
       });
       let response = await request.json();
       if (request.status === 200) {
-        setAssignMsg(response.message);
+        showToastSuccess(response.message);
+        setAssignLoading(false);
         request = await fetch(`${baseUrl}/api/available_incidents/${id}`);
         response = await request.json();
         if (request.status === 200) {
@@ -114,11 +125,13 @@ export default function AssignCase() {
           }
         }
       } else {
-        setAssignMsg(response.message);
+        setAssignLoading(false);
+        showToastError(response.message);
       }
     } catch (e) {
       console.error(e);
-      setMessage("There was an error talking to our server");
+      setAssignLoading(false);
+      showToastError("There was an error talking to our server");
     }
     setAssignedIncident("");
     setAvailableIncident("");
@@ -126,6 +139,7 @@ export default function AssignCase() {
 
   const handleUnAssign = async (e) => {
     e.preventDefault();
+    setUnAssignLoading(true);
     try {
       let request = await fetch(`${baseUrl}/api/unassign`, {
         method: "POST",
@@ -139,7 +153,8 @@ export default function AssignCase() {
       });
       let response = await request.json();
       if (request.status === 200) {
-        setUnAssignMsg(response.message);
+        showToastSuccess(response.message);
+        setUnAssignLoading(false);
         request = await fetch(`${baseUrl}/api/assigned_incidents/${id}`);
         response = await request.json();
         if (request.status === 200) {
@@ -151,11 +166,13 @@ export default function AssignCase() {
           }
         }
       } else {
-        setUnAssignMsg(response.message);
+        setUnAssignLoading(false);
+        showToastError(response.message);
       }
     } catch (e) {
       console.error(e);
-      setMessage("There was an error talking to our server");
+      setUnAssignLoading(false);
+      showToastError("There was an error talking to our server");
     }
     setAssignedIncident("");
     setAvailableIncident("");
@@ -167,6 +184,7 @@ export default function AssignCase() {
         header={`Assign Case to Employee #${id}`}
         subheader="No need for a subheader :3"
       />
+      <ToastContainer position="top-right" />
       <Box margin="20px">
         {message ? (
           <h1>{message}</h1>
@@ -194,9 +212,7 @@ export default function AssignCase() {
               </Typography>
             </Typography>
             <Divider sx={{ m: 2 }} />
-            {assignMsg && (
-              <Typography sx={{ color: "red" }}>{assignMsg}</Typography>
-            )}
+
             <Box m="20px 0px">
               <Typography>Assign a case to this employee:</Typography>
               <Box width={500} display="flex" flexDirection="column">
@@ -220,21 +236,21 @@ export default function AssignCase() {
                       ))}
                     </Select>
                   </FormControl>
-                  <Button
+                  <LoadingButton
                     sx={{ m: 2, width: 200 }}
-                    variant="contained"
+                    variant="outlined"
                     type="submit"
                     disabled={availableIncident === ""}
+                    loading={assignLoading}
+                    loadingPosition="end"
                   >
                     Assign case
-                  </Button>
+                  </LoadingButton>
                 </form>
               </Box>
             </Box>
             <Divider sx={{ m: 2 }} />
-            {unAssignMsg && (
-              <Typography sx={{ color: "red" }}>{unAssignMsg}</Typography>
-            )}
+
             <Box m="20px 0px">
               <Typography>Unassign a case to this employee:</Typography>
               <Box width={500} display="flex" flexDirection="column">
@@ -258,14 +274,16 @@ export default function AssignCase() {
                       ))}
                     </Select>
                   </FormControl>
-                  <Button
+                  <LoadingButton
                     sx={{ m: 2, width: 200 }}
-                    variant="contained"
+                    variant="outlined"
                     type="submit"
                     disabled={assignedIncident === ""}
+                    loading={unAssignLoading}
+                    loadingPosition="end"
                   >
                     Unassign case
-                  </Button>
+                  </LoadingButton>
                 </form>
               </Box>
             </Box>
