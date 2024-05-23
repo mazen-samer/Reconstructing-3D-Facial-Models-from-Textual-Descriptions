@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Box, TextField, Button } from "@mui/material";
+import { Box, TextField } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import Navbar from "../components/Navbar";
 import { useForm } from "react-hook-form";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddEmployee() {
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const {
     register,
@@ -12,6 +14,13 @@ export default function AddEmployee() {
     formState: { errors },
     reset,
   } = useForm({});
+
+  const showToastError = (message) => {
+    toast.error(message);
+  };
+  const showToastSuccess = (message) => {
+    toast.success(message);
+  };
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -24,13 +33,21 @@ export default function AddEmployee() {
         body: JSON.stringify(data),
       });
       const response = await request.json();
-      setMessage(response.message);
-      setIsLoading(false);
-      reset();
+      if (request.status === 200) {
+        showToastSuccess(response.message);
+        setIsLoading(false);
+        reset();
+      } else {
+        console.error(response.error);
+        showToastError(response.message);
+        setIsLoading(false);
+        reset();
+      }
     } catch (e) {
       console.error(e);
       setIsLoading(false);
-      setMessage("Something went wrong with the server");
+      showToastError("There was an error talking to our server");
+      reset();
     }
   };
   return (
@@ -39,9 +56,8 @@ export default function AddEmployee() {
         header="Add Employee"
         subheader="Where you add an employee to the system."
       />
+      <ToastContainer position="top-right" />
       <Box margin="20px">
-        {message !== "" && <p style={{ color: "red" }}>{message}</p>}
-        {isLoading && <p>Loading...</p>}
         <form onSubmit={handleSubmit(onSubmit)}>
           <Box
             display="flex"
@@ -85,9 +101,15 @@ export default function AddEmployee() {
             {errors.dob?.message && (
               <p style={{ color: "red" }}>{errors.dob?.message}</p>
             )}
-            <Button type="submit" variant="outlined">
+            <LoadingButton
+              sx={{ width: 180 }}
+              type="submit"
+              variant="outlined"
+              loading={isLoading}
+              loadingPosition="end"
+            >
               Add Employee
-            </Button>
+            </LoadingButton>
           </Box>
         </form>
       </Box>

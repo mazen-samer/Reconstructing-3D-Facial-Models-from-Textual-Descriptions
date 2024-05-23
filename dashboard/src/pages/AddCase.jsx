@@ -40,11 +40,14 @@ export default function AddCase() {
       } else {
         console.error(response.error);
         showToastError(response.message);
+        setIsLoading(false);
+        reset();
       }
     } catch (e) {
       console.error(e);
       setIsLoading(false);
-      showToastError("Something went wrong with the server");
+      showToastError("There was an error talking to our server");
+      reset();
     }
   };
 
