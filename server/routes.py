@@ -82,18 +82,35 @@ def configure_routes(app):
     def addemployee():
         data = request.json
         try:
+            employee = Employee.query.filter_by(ssn=data.get("ssn")).first()
+            if employee:
+                return (
+                    jsonify(
+                        {
+                            "message": "There exists an employee with the same SSN",
+                            "status": "failed",
+                        }
+                    ),
+                    406,
+                )
             new_employee = Employee(ssn=data["ssn"], name=data["name"], dob=data["dob"])
             db.session.add(new_employee)
             db.session.commit()
         except Exception as e:
-            return jsonify(
-                {
-                    "status": "failed",
-                    "message": "Failed to add employee",
-                    "error": str(e),
-                }
+            return (
+                jsonify(
+                    {
+                        "status": "failed",
+                        "message": "Failed to add employee",
+                        "error": str(e),
+                    }
+                ),
+                500,
             )
-        return jsonify({"status": "success", "message": "Employee added successfully!"})
+        return (
+            jsonify({"status": "success", "message": "Employee added successfully!"}),
+            200,
+        )
 
     @app.route("/api/addcase", methods=["POST"])
     def addcase():
@@ -114,6 +131,7 @@ def configure_routes(app):
     def getemployee(id):
         try:
             employee = Employee.query.get(id)
+            print(employee)
             if not employee:
                 return (
                     jsonify({"message": "Employee not found", "status": "failed"}),
