@@ -109,6 +109,7 @@ export default function AddCase() {
               variant="outlined"
               loading={isLoading}
               loadingPosition="end"
+              endIcon={<></>}
             >
               Add Case
             </LoadingButton>
