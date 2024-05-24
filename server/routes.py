@@ -1,9 +1,21 @@
 from flask import jsonify, send_from_directory, request
 from models import *
 from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
 
 # importing module
 import SDPipe.generate as generator
+
+
+UPLOAD_FOLDER = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "static", "imgs"
+)
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def configure_routes(app):
@@ -80,8 +92,26 @@ def configure_routes(app):
 
     @app.route("/api/addemployee", methods=["POST"])
     def addemployee():
-        data = request.json
+        if "file" not in request.files:
+            return jsonify({"status": "failed", "message": "No file attached"}), 400
+
+        file = request.files["file"]
+
+        if file.filename == "":
+            return (
+                jsonify({"status": "failed", "message": "No selected file was sent"}),
+                400,
+            )
+
+        if not allowed_file(file.filename):
+            return (
+                jsonify({"status": "failed", "message": "File type not allowed"}),
+                400,
+            )
+
+        data = request.form
         try:
+            print(UPLOAD_FOLDER)
             employee = Employee.query.filter_by(ssn=data.get("ssn")).first()
             if employee:
                 return (
@@ -93,10 +123,21 @@ def configure_routes(app):
                     ),
                     406,
                 )
+
             new_employee = Employee(ssn=data["ssn"], name=data["name"], dob=data["dob"])
             db.session.add(new_employee)
+            db.session.flush()  # Ensure the ID is generated without committing
+
+            # Generate filename with the new employee id
+            employee_id = new_employee.id
+            filename = secure_filename(f"employee-{employee_id}.png")
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(file_path)
+
             db.session.commit()
+
         except Exception as e:
+            db.session.rollback()  # Roll back the transaction on error
             return (
                 jsonify(
                     {
@@ -107,6 +148,7 @@ def configure_routes(app):
                 ),
                 500,
             )
+
         return (
             jsonify({"status": "success", "message": "Employee added successfully!"}),
             200,
