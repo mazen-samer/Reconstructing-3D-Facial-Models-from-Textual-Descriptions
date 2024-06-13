@@ -4,8 +4,9 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
 
-# importing module
+# importing modules
 import SDPipe.generate as generator
+import DPPipe.compare as compare
 
 
 UPLOAD_FOLDER = os.path.join(
@@ -19,7 +20,7 @@ def allowed_file(filename):
 
 
 def configure_routes(app):
-    # Routes
+    # Client
     @app.route("/api/getimage/<int:img_id>", methods=["GET"])
     def test(img_id):
         try:
@@ -48,6 +49,82 @@ def configure_routes(app):
             {"status": "success", "message": "Image generated", "path": path}
         )
 
+    @app.route("/api/last_assigned_case/<ssn>", methods=["GET"])
+    def get_last_assigned_case(ssn):
+        try:
+            # Query the employee based on SSN
+            employee = Employee.query.filter_by(ssn=ssn).first()
+            if not employee:
+                return (
+                    jsonify({"message": "Employee not found", "status": "failed"}),
+                    404,
+                )
+
+            # Query the last assigned case for the employee based on their ID
+            last_assignment = (
+                Assigned.query.filter_by(employee_id=employee.id)
+                .order_by(Assigned.assigned_at.desc(), Assigned.id.desc())
+                .first()
+            )
+            if not last_assignment:
+                return (
+                    jsonify(
+                        {
+                            "message": "No assignments found for this employee",
+                            "status": "failed",
+                        }
+                    ),
+                    404,
+                )
+
+            # Get the incident details for the last assignment
+            incident = Incident.query.get(last_assignment.incident_id)
+
+            # Serialize the employee details
+            serialized_employee = {
+                "id": employee.id,
+                "name": employee.name,
+                "ssn": employee.ssn,
+                # Include other employee details as needed
+            }
+
+            # Serialize the incident details
+            serialized_incident = {
+                "id": incident.id,
+                "title": incident.title,
+                "description": incident.description,
+                "date": incident.date.strftime("%Y-%m-%d"),  # Format date as string
+            }
+
+            # Return the serialized employee and incident details as JSON response
+            return jsonify(
+                {
+                    "status": "success",
+                    "employee": serialized_employee,
+                    "incident": serialized_incident,
+                }
+            )
+
+        except Exception as e:
+            return (
+                jsonify({"message": str(e), "status": "failed"}),
+                500,
+            )  # Return error message and set HTTP status code to 500 for internal server error
+
+    @app.route("/api/compare/<img>", methods=["GET"])
+    def compare_img(img):
+        try:
+            print(compare.get_imgs(img), "i love me")
+            imgs = compare.get_imgs(img)
+            return {"status": "success", "data": imgs[:5]}, 200
+        except Exception as e:
+            return {
+                "status": "failed",
+                "message": "There was an error while getting the images",
+                "error": str(e),
+            }, 500
+
+    # Dashboard
     @app.route("/api/getallpeople")
     def getallpeople():
         try:
@@ -193,7 +270,6 @@ def configure_routes(app):
                 500,
             )
 
-    # CORE ROUTES
     @app.route("/api/assign", methods=["POST"])
     def assign_employee_to_incident():
         try:
@@ -355,68 +431,6 @@ def configure_routes(app):
                 jsonify({"message": str(e), "status": "failed"}),
                 400,
             )  # Return error message and set HTTP status code to 400
-
-    @app.route("/api/last_assigned_case/<ssn>", methods=["GET"])
-    def get_last_assigned_case(ssn):
-        try:
-            # Query the employee based on SSN
-            employee = Employee.query.filter_by(ssn=ssn).first()
-            if not employee:
-                return (
-                    jsonify({"message": "Employee not found", "status": "failed"}),
-                    404,
-                )
-
-            # Query the last assigned case for the employee based on their ID
-            last_assignment = (
-                Assigned.query.filter_by(employee_id=employee.id)
-                .order_by(Assigned.assigned_at.desc(), Assigned.id.desc())
-                .first()
-            )
-            if not last_assignment:
-                return (
-                    jsonify(
-                        {
-                            "message": "No assignments found for this employee",
-                            "status": "failed",
-                        }
-                    ),
-                    404,
-                )
-
-            # Get the incident details for the last assignment
-            incident = Incident.query.get(last_assignment.incident_id)
-
-            # Serialize the employee details
-            serialized_employee = {
-                "id": employee.id,
-                "name": employee.name,
-                "ssn": employee.ssn,
-                # Include other employee details as needed
-            }
-
-            # Serialize the incident details
-            serialized_incident = {
-                "id": incident.id,
-                "title": incident.title,
-                "description": incident.description,
-                "date": incident.date.strftime("%Y-%m-%d"),  # Format date as string
-            }
-
-            # Return the serialized employee and incident details as JSON response
-            return jsonify(
-                {
-                    "status": "success",
-                    "employee": serialized_employee,
-                    "incident": serialized_incident,
-                }
-            )
-
-        except Exception as e:
-            return (
-                jsonify({"message": str(e), "status": "failed"}),
-                500,
-            )  # Return error message and set HTTP status code to 500 for internal server error
 
     @app.route("/api/assigned_incidents/<int:employee_id>", methods=["GET"])
     def get_assigned_incidents(employee_id):
