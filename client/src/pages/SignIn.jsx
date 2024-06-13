@@ -93,7 +93,7 @@ export default function SignIn() {
                 htmlType="submit"
                 loading={loading}
               >
-                {!loading ? "Testimonify" : "Letting you in"}
+                {!loading ? "Testify" : "Letting you in"}
               </Button>
             </Form.Item>
             {/* {message === "" ? null : <Text type="danger">{message}</Text>} */}
