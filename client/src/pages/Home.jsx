@@ -2,6 +2,7 @@ import React, { useContext, useState } from "react";
 import { UserContext } from "../contexts/UserContext";
 import { Button, Typography, Space, Form, Input, Spin, Flex } from "antd";
 import { baseUrl } from "../constants/baseUrl";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -10,6 +11,7 @@ export default function Home() {
   const { user } = useContext(UserContext);
   const [loading, setLoading] = useState(false);
   const [img, setImg] = useState(null);
+  const navigate = useNavigate();
 
   const handleSubmit = async (values) => {
     setImg(null);
@@ -19,7 +21,10 @@ export default function Home() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ...values, "img-id": 2000 }),
+      body: JSON.stringify({
+        ...values,
+        "img-id": `generated-${user.user.id}`,
+      }),
     });
 
     const response = await request.json();
@@ -83,11 +88,28 @@ export default function Home() {
       </Space>
       <Flex justify="center" align="center" style={{ width: 500, height: 550 }}>
         {img ? (
-          <img
-            src={img}
-            alt=""
-            style={{ width: 500, height: 550, objectFit: "cover" }}
-          />
+          <Space direction="vertical" align="right">
+            <img
+              src={img}
+              alt=""
+              style={{ width: 500, height: 550, objectFit: "cover" }}
+            />
+            <div style={{ textAlign: "right", width: "100%" }}>
+              <Button
+                size="large"
+                type="primary"
+                onClick={() =>
+                  navigate("/compare", {
+                    state: {
+                      img: img,
+                    },
+                  })
+                }
+              >
+                Continue
+              </Button>
+            </div>
+          </Space>
         ) : (
           <Space>
             {loading ? (
@@ -98,7 +120,6 @@ export default function Home() {
             ) : (
               <Text type="secondary">The image will appear here</Text>
             )}
-            {img && !loading ? <Button>Continue</Button> : null}
           </Space>
         )}
       </Flex>
