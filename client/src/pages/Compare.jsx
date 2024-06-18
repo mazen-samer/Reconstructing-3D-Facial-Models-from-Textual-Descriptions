@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Button, Typography, Space, Spin, Carousel } from "antd";
 import { UserContext } from "../contexts/UserContext";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -12,6 +12,7 @@ const { Title, Text } = Typography;
 export default function Compare() {
   const { user } = useContext(UserContext);
   const location = useLocation();
+  const navigate = useNavigate();
   const [imgId, setImgId] = useState(0);
   const [loading, setLoading] = useState(false);
   const [imgs, setImgs] = useState([]);
@@ -147,9 +148,19 @@ export default function Compare() {
                     Proceed to next step?
                   </Text>
                   <br />
-                  <Link>
-                    <Button type="primary">Proceed</Button>
-                  </Link>
+                  <Button
+                    type="primary"
+                    onClick={() =>
+                      navigate("/view3d", {
+                        state: {
+                          generatedImg: img,
+                          selectedImg: null,
+                        },
+                      })
+                    }
+                  >
+                    Proceed
+                  </Button>
                 </>
               ) : (
                 <Text style={{ textAlign: "center" }}>{message}</Text>
@@ -190,7 +201,14 @@ export default function Compare() {
                 <Button
                   size="large"
                   type="primary"
-                  onClick={() => console.log(imgId)}
+                  onClick={() =>
+                    navigate("/view3d", {
+                      state: {
+                        generatedImg: img,
+                        selectedImg: `${baseUrl}/static/imgs/${imgs[imgId]}`,
+                      },
+                    })
+                  }
                 >
                   Select no.{imgId + 1}
                 </Button>
@@ -198,7 +216,14 @@ export default function Compare() {
                   size="large"
                   type="default"
                   style={{ backgroundColor: "transparent" }}
-                  onClick={() => console.log(imgId)}
+                  onClick={() =>
+                    navigate("/view3d", {
+                      state: {
+                        generatedImg: img,
+                        selectedImg: null,
+                      },
+                    })
+                  }
                 >
                   Skip
                 </Button>

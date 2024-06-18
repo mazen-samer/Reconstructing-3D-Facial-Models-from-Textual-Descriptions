@@ -23,7 +23,7 @@ export default function Home() {
       },
       body: JSON.stringify({
         ...values,
-        "img-id": `generated-${user.user.id}`,
+        "img-id": `generated-${user.user.id}-${user.incident.id}`,
       }),
     });
 

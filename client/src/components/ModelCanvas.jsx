@@ -9,10 +9,10 @@ function Model({ obj }) {
   return obj ? <primitive object={obj} scale={0.007} /> : null;
 }
 
-export default function ModelCanvas() {
+export default function ModelCanvas({ id }) {
   const [obj, setObj] = useState(null);
   const [cameraPosition, setCameraPosition] = useState([0, 0, 500]);
-  const canvasSize = [200, 200];
+  const canvasSize = [400, 400];
   useEffect(() => {
     const fetchObj = async () => {
       try {
