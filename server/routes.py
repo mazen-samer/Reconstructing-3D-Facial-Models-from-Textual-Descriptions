@@ -1,8 +1,10 @@
 from flask import jsonify, send_from_directory, request
 from models import *
+import requests
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
+
 
 # importing modules
 import SDPipe.generate as generator
@@ -472,3 +474,11 @@ def configure_routes(app):
                 jsonify({"error": str(e), "status": "failed"}),
                 500,
             )  # Return error message and set HTTP status code to 500 for internal server error
+
+    # Generate 3d model using microservices
+    @app.route("/api/generate3dmodel", methods=["GET"])
+    def generate3dmodel():
+        response = requests.get("http://localhost:5001/api/generate3dmodel")
+        print(response)
+
+        return response.json()
