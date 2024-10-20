@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Box, TextField, Button } from "@mui/material";
+import { Box, TextField } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import Navbar from "../components/Navbar";
 import { useForm } from "react-hook-form";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddCase() {
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const {
     register,
@@ -12,6 +14,13 @@ export default function AddCase() {
     formState: { errors },
     reset,
   } = useForm({});
+
+  const showToastError = (message) => {
+    toast.error(message);
+  };
+  const showToastSuccess = (message) => {
+    toast.success(message);
+  };
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -24,16 +33,21 @@ export default function AddCase() {
         body: JSON.stringify(data),
       });
       const response = await request.json();
-      setMessage(response.message);
-      if (response.error) {
+      if (request.status === 200) {
+        showToastSuccess(response.message);
+        setIsLoading(false);
+        reset();
+      } else {
         console.error(response.error);
+        showToastError(response.message);
+        setIsLoading(false);
+        reset();
       }
-      setIsLoading(false);
-      reset();
     } catch (e) {
       console.error(e);
       setIsLoading(false);
-      setMessage("Something went wrong with the server");
+      showToastError("There was an error talking to our server");
+      reset();
     }
   };
 
@@ -43,9 +57,8 @@ export default function AddCase() {
         header="Add Case"
         subheader="Where you add a case to begin its investigation."
       />
+      <ToastContainer position="top-right" />
       <Box margin="20px">
-        {message !== "" && <p style={{ color: "red" }}>{message}</p>}
-        {isLoading && <p>Loading...</p>}
         <form onSubmit={handleSubmit(onSubmit)}>
           <Box
             display="flex"
@@ -84,15 +97,22 @@ export default function AddCase() {
               style={{ fontSize: 20 }}
               type="date"
               {...register("date", {
-                required: "Please enter a date",
+                required: "Please enter a date!",
               })}
             />
             {errors.date?.message && (
               <p style={{ color: "red" }}>{errors.date?.message}</p>
             )}
-            <Button type="submit" variant="outlined">
+            <LoadingButton
+              sx={{ width: 150 }}
+              type="submit"
+              variant="outlined"
+              loading={isLoading}
+              loadingPosition="end"
+              endIcon={<></>}
+            >
               Add Case
-            </Button>
+            </LoadingButton>
           </Box>
         </form>
       </Box>

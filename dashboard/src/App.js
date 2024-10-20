@@ -7,6 +7,7 @@ import AddCase from "./pages/AddCase";
 import ViewEmployees from "./pages/ViewEmployees";
 import AssignCase from "./pages/AssignCase";
 import AddEmployee from "./pages/AddEmployee";
+import ViewCases from "./pages/ViewCases";
 
 function App() {
   return (
@@ -19,8 +20,9 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/addcase" element={<AddCase />} />
               <Route path="/addemployee" element={<AddEmployee />} />
-              <Route path="/viewall" element={<ViewEmployees />} />
+              <Route path="/viewemployees" element={<ViewEmployees />} />
               <Route path="/assign/:id" element={<AssignCase />} />
+              <Route path="/viewcases" element={<ViewCases />} />
             </Routes>
           </Box>
         </Box>

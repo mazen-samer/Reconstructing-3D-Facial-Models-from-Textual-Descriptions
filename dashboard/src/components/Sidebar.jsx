@@ -31,13 +31,16 @@ export default function Sidebar() {
             Cases
           </Typography>
           <MenuItem component={<NavLink to="/addcase" />}>Add a case</MenuItem>
+          <MenuItem component={<NavLink to="/viewcases" />}>
+            View all cases
+          </MenuItem>
           <Typography fontSize="18px" fontWeight="bold" padding="5px 20px">
             Employees' Affairs
           </Typography>
           <MenuItem component={<NavLink to="/addemployee" />}>
             Add Employee
           </MenuItem>
-          <MenuItem component={<NavLink to="/viewall" />}>
+          <MenuItem component={<NavLink to="/viewemployees" />}>
             View Employees
           </MenuItem>
         </Menu>

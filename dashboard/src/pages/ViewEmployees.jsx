@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { CircularProgress } from "@mui/material";
+
 import {
   Box,
   Divider,
@@ -35,7 +37,6 @@ export default function ViewEmployees() {
             method: "GET",
           });
           const response = await request.json();
-          console.log(response);
           setEmployees(response.data);
           if (response.data.length === 0) {
             setIsEmpty(true);
@@ -81,9 +82,9 @@ export default function ViewEmployees() {
           />
         </Box>
         <Box padding="20px" marginTop="20px">
-          {isLoading && <p>Loading...</p>}
+          {isLoading && <CircularProgress />}
           {!isLoading && serverErr && (
-            <p>Something went wrong in the server!</p>
+            <p>There was an error talking to our server</p>
           )}
 
           {isEmpty ? (

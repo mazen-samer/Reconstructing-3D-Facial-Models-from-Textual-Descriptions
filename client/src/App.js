@@ -6,6 +6,9 @@ import { ConfigProvider } from "antd";
 import { themeData } from "./constants/theme";
 import { UserContext } from "./contexts/UserContext";
 import Home from "./pages/Home";
+import Compare from "./pages/Compare";
+import View3dModel from "./pages/View3dModel";
+import EndTestimonial from "./pages/EndTestimonial";
 
 function App() {
   const { user } = useContext(UserContext);
@@ -23,6 +26,9 @@ function App() {
         <Routes>
           <Route path="/signin" element={<SignIn />} />
           <Route path="/" element={<Home />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/view3d" element={<View3dModel />} />
+          <Route path="/endtestimonial" element={<EndTestimonial />} />
         </Routes>
       </ConfigProvider>
     </div>
