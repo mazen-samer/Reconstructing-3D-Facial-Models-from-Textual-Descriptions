@@ -1,8 +1,9 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { UserContext } from "../contexts/UserContext";
 import { Button, Typography, Space, Form, Input, Spin, Flex } from "antd";
 import { baseUrl } from "../constants/baseUrl";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -11,26 +12,49 @@ export default function Home() {
   const { user } = useContext(UserContext);
   const [loading, setLoading] = useState(false);
   const [img, setImg] = useState(null);
+  const [token, setToken] = useState(null);
+  const [description, setDescription] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (values) => {
-    setImg(null);
-    setLoading(true);
-    const request = await fetch(`${baseUrl}/api/generateImage`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...values,
-        "img-id": `generated-${user.user.id}-${user.incident.id}`,
-      }),
-    });
+  useEffect(() => {
+    const token = sessionStorage.getItem("access_token");
+    setToken(token);
+  }, []);
 
-    const response = await request.json();
-    console.log(response);
-    setImg(`${baseUrl}/${response.path}.png`);
-    setLoading(false);
+  const showToastMessage = (message) => {
+    toast.error(message);
+  };
+
+  const handleSubmit = async (values) => {
+    try {
+      setImg(null);
+      setLoading(true);
+      setDescription(values.description);
+      const request = await fetch(`${baseUrl}/api/generateImage`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...values,
+          "img-id": `generated-${user.user.id}-${user.incident.id}`,
+        }),
+      });
+      const response = await request.json();
+      console.log(request);
+      if (request.status === 200) {
+        console.log(response);
+        setImg(`${baseUrl}/${response.path}.png`);
+        setLoading(false);
+      } else {
+        setLoading(false);
+        showToastMessage(response.message);
+        console.log(response.message);
+      }
+    } catch (e) {
+      showToastMessage("There was an error connecting to the server.");
+    }
   };
 
   return (
@@ -42,6 +66,7 @@ export default function Home() {
         minHeight: "100vh",
       }}
     >
+      <ToastContainer position="top-right" theme="dark" />
       <Space direction="vertical" align="left" style={{ width: 600 }}>
         <Title
           style={{
@@ -102,6 +127,7 @@ export default function Home() {
                   navigate("/compare", {
                     state: {
                       img: img,
+                      testimonyDescription: description,
                     },
                   })
                 }

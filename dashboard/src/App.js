@@ -8,6 +8,7 @@ import ViewEmployees from "./pages/ViewEmployees";
 import AssignCase from "./pages/AssignCase";
 import AddEmployee from "./pages/AddEmployee";
 import ViewCases from "./pages/ViewCases";
+import ViewCase from "./pages/ViewCase";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
               <Route path="/viewemployees" element={<ViewEmployees />} />
               <Route path="/assign/:id" element={<AssignCase />} />
               <Route path="/viewcases" element={<ViewCases />} />
+              <Route path="/incident/:id" element={<ViewCase />} />
             </Routes>
           </Box>
         </Box>

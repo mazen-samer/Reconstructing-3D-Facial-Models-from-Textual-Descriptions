@@ -1,20 +1,30 @@
 from flask import jsonify, send_from_directory, request
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    jwt_required,
+    get_jwt_identity,
+)
+from datetime import timedelta
 from models import *
 import requests
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
+from dotenv import load_dotenv
 
 
 # importing modules
-import SDPipe.generate as generator
-import DPPipe.compare as compare
+# import SDPipe.generate as generator
+# import DPPipe.compare as compare
 
 
 UPLOAD_FOLDER = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "static", "imgs"
 )
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+load_dotenv()
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 
 def allowed_file(filename):
@@ -22,6 +32,24 @@ def allowed_file(filename):
 
 
 def configure_routes(app):
+    app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
+    jwt = JWTManager(app)
+    # app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
+    jwt.default_auth_token_expires = timedelta(days=365 * 100)
+    app.config["JWT_DEBUG"] = True
+
+    @jwt.expired_token_loader
+    def expired_token_callback(token):
+        return jsonify({"message": "Token has expired"}), 401
+
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error):
+        return jsonify({"message": "Invalid token", "error": error}), 401
+
+    @jwt.unauthorized_loader
+    def unauthorized_callback(error):
+        return jsonify({"message": "Unauthorized", "error": error}), 401
+
     # Client
     @app.route("/api/getimage/<int:img_id>", methods=["GET"])
     def test(img_id):
@@ -32,24 +60,33 @@ def configure_routes(app):
             return {"message": str(e), "status": "failed"}
 
     @app.route("/static/3dobjs/<int:obj_id>")
+    # @jwt_required()
     def testmodel(obj_id):
         try:
-            return send_from_directory("static/3dobjs", f"3dobj-{obj_id}.obj")
+            current_user = get_jwt_identity()
+            print(f"User {current_user} is accessing get_image")
+            return send_from_directory("static/3dobjs", f"{obj_id}")
         except Exception as e:
             return {"message": str(e), "status": "failed"}
 
     @app.route("/api/generateImage", methods=["POST"])
+    # @jwt_required()
     def generateImage():
         try:
             name = request.json["img-id"]
-            img_path = f"../server/static/generated/{name}"
-            generator.generate_img(request.json["description"], img_path)
+            description = request.json["description"]
+            response = requests.post(
+                "http://localhost:5001/api/generateImage",
+                json={"img-id": name, "description": description},
+            )
         except Exception as e:
-            return jsonify({"error": str(e), "status": "failed"}), 500
-        path = f"static/generated/{name}"
-        return jsonify(
-            {"status": "success", "message": "Image generated", "path": path}
-        )
+            return jsonify(
+                {
+                    "message": "Something went wrong in this microservice.",
+                    "error": e,
+                }
+            )
+        return response.json()
 
     @app.route("/api/last_assigned_case/<ssn>", methods=["GET"])
     def get_last_assigned_case(ssn):
@@ -97,13 +134,14 @@ def configure_routes(app):
                 "description": incident.description,
                 "date": incident.date.strftime("%Y-%m-%d"),  # Format date as string
             }
-
+            access_token = create_access_token(identity=employee.ssn)
             # Return the serialized employee and incident details as JSON response
             return jsonify(
                 {
                     "status": "success",
                     "employee": serialized_employee,
                     "incident": serialized_incident,
+                    "access_token": access_token,
                 }
             )
 
@@ -114,17 +152,151 @@ def configure_routes(app):
             )  # Return error message and set HTTP status code to 500 for internal server error
 
     @app.route("/api/compare/<img>", methods=["GET"])
+    # @jwt_required()
     def compare_img(img):
         try:
-            print(compare.get_imgs(img), "i love me")
-            imgs = compare.get_imgs(img)
-            return {"status": "success", "data": imgs[:5]}, 200
+            response = requests.get(f"http://localhost:5002/api/compare/{img}")
         except Exception as e:
-            return {
-                "status": "failed",
-                "message": "There was an error while getting the images",
-                "error": str(e),
-            }, 500
+            return jsonify(
+                {
+                    "message": "Something went wrong in this microservice.",
+                    "error": e,
+                }
+            )
+        return response.json()
+
+    @app.route("/api/save_testimonial", methods=["POST"])
+    # @jwt_required()
+    def save_testimonial():
+        try:
+            data = request.json
+            employee_id = data.get("employee_id")
+            criminal_id = data.get("criminal_id")
+            incident_id = data.get("incident_id")
+            testimonial_text = data.get("testimonial_text")
+
+            if not (employee_id and incident_id and testimonial_text):
+                return (
+                    jsonify({"message": "Missing required fields", "status": "failed"}),
+                    400,
+                )
+
+            employee = Employee.query.get(employee_id)
+            if not employee:
+                return (
+                    jsonify({"message": "Employee not found", "status": "failed"}),
+                    404,
+                )
+
+            incident = Incident.query.get(incident_id)
+            if not incident:
+                return (
+                    jsonify({"message": "Incident not found", "status": "failed"}),
+                    404,
+                )
+
+            testimonial = Testimonial(
+                employee_id=employee_id,
+                criminal_id=criminal_id,
+                incident_id=incident_id,
+                testimonial_text=testimonial_text,
+            )
+            db.session.add(testimonial)
+
+            if criminal_id:
+                suspect = Employee.query.get(criminal_id)
+                if not suspect:
+                    return (
+                        jsonify({"message": "Suspect not found", "status": "failed"}),
+                        404,
+                    )
+
+                new_suspect = Suspect(suspect_id=criminal_id, incident_id=incident_id)
+                db.session.add(new_suspect)
+
+            db.session.commit()
+
+            return (
+                jsonify(
+                    {
+                        "message": "Testimonial and suspect added successfully",
+                        "status": "success",
+                    }
+                ),
+                200,
+            )
+
+        except Exception as e:
+            db.session.rollback()
+            return (
+                jsonify(
+                    {
+                        "error": str(e),
+                        "status": "failed",
+                        "message": "Could'nt add testimonial.",
+                    }
+                ),
+                500,
+            )
+
+    @app.route("/api/generate3d/<img>", methods=["GET"])
+    def generat3d(img):
+        try:
+            response = requests.get(f"http://localhost:5003/api/generate3d/{img}")
+        except Exception as e:
+            return jsonify(
+                {
+                    "message": "Something went wrong in this microservice.",
+                    "error": e,
+                }
+            )
+        return response.json()
+
+    @app.route("/api/unassign_employee/<int:employee_id>", methods=["DELETE"])
+    def unassign_employee(employee_id):
+        try:
+            # Query all assignments for the given employee_id
+            assignments = Assigned.query.filter_by(employee_id=employee_id).all()
+
+            if not assignments:
+                return (
+                    jsonify(
+                        {
+                            "message": "No assignments found for this employee",
+                            "status": "failed",
+                        }
+                    ),
+                    404,
+                )
+
+            # Delete all assignments for the employee
+            for assignment in assignments:
+                db.session.delete(assignment)
+
+            db.session.commit()
+
+            return (
+                jsonify(
+                    {
+                        "message": "All assignments unassigned successfully",
+                        "status": "success",
+                    }
+                ),
+                200,
+            )
+
+        except Exception as e:
+            db.session.rollback()
+            return (
+                jsonify(
+                    {
+                        "error": str(e),
+                        "status": "failed",
+                        "message": "Could'nt unassign employee",
+                    }
+                ),
+                500,
+            )
 
     # Dashboard
     @app.route("/api/getallpeople")
@@ -271,6 +443,27 @@ def configure_routes(app):
                 jsonify({"message": str(e), "status": "failed"}),
                 500,
             )
+
+    @app.route("/api/getincident/<int:id>", methods=["GET"])
+    def get_incident(id):
+        try:
+            incident = Incident.query.get(id)
+            if not incident:
+                return (
+                    jsonify({"message": "Incident not found", "status": "failed"}),
+                    404,
+                )
+
+            serialized_incident = {
+                "id": incident.id,
+                "title": incident.title,
+                "description": incident.description,
+                "date": incident.date.strftime("%Y-%m-%d"),  # Format date if needed
+            }
+            return jsonify({"data": serialized_incident, "status": "success"})
+
+        except Exception as e:
+            return jsonify({"message": str(e), "status": "failed"}), 500
 
     @app.route("/api/assign", methods=["POST"])
     def assign_employee_to_incident():
@@ -475,10 +668,60 @@ def configure_routes(app):
                 500,
             )  # Return error message and set HTTP status code to 500 for internal server error
 
-    # Generate 3d model using microservices
-    @app.route("/api/generate3dmodel", methods=["GET"])
-    def generate3dmodel():
-        response = requests.get("http://localhost:5001/api/generate3dmodel")
-        print(response)
+    @app.route("/api/testimonials/<int:incident_id>", methods=["GET"])
+    def get_testimonials_by_incident(incident_id):
+        try:
+            # Query all testimonials for the given incident_id
+            testimonials = Testimonial.query.filter_by(incident_id=incident_id).all()
 
-        return response.json()
+            if not testimonials:
+                return (
+                    jsonify(
+                        {
+                            "message": "No testimonials found for this incident",
+                            "status": "failed",
+                        }
+                    ),
+                    404,
+                )
+
+            # Serialize each testimonial's details
+            serialized_testimonials = []
+            for testimonial in testimonials:
+                employee = Employee.query.get(testimonial.employee_id)
+                criminal = (
+                    Employee.query.get(testimonial.criminal_id)
+                    if testimonial.criminal_id
+                    else None
+                )
+
+                testimonial_data = {
+                    "id": testimonial.id,
+                    "testimonial_text": testimonial.testimonial_text,
+                    "employee": {
+                        "id": employee.id,
+                        "name": employee.name,
+                        "ssn": employee.ssn,
+                        "dob": employee.dob.strftime("%Y-%m-%d"),
+                    },
+                    "criminal": (
+                        {
+                            "id": criminal.id,
+                            "name": criminal.name,
+                            "ssn": criminal.ssn,
+                            "dob": criminal.dob.strftime("%Y-%m-%d"),
+                        }
+                        if criminal
+                        else None
+                    ),
+                    "incident_id": testimonial.incident_id,
+                }
+                serialized_testimonials.append(testimonial_data)
+
+            return (
+                jsonify({"status": "success", "data": serialized_testimonials}),
+                200,
+            )
+
+        except Exception as e:
+            return jsonify({"error": str(e), "status": "failed"}), 500

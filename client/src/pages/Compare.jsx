@@ -1,6 +1,5 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Typography, Space, Spin, Carousel } from "antd";
-import { UserContext } from "../contexts/UserContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -10,15 +9,16 @@ import { baseUrl } from "../constants/baseUrl";
 const { Title, Text } = Typography;
 
 export default function Compare() {
-  const { user } = useContext(UserContext);
   const location = useLocation();
   const navigate = useNavigate();
   const [imgId, setImgId] = useState(0);
   const [loading, setLoading] = useState(false);
   const [imgs, setImgs] = useState([]);
   const [message, setMessage] = useState("");
+  const [token, setToken] = useState(null);
 
-  const { img } = location.state || {};
+  const { img, testimonyDescription } = location.state || {};
+  console.log(testimonyDescription);
   const imgName = img ? img.split("/").pop() : "";
 
   const showToastMessage = (message) => {
@@ -26,11 +26,19 @@ export default function Compare() {
   };
 
   useEffect(() => {
+    const token = sessionStorage.getItem("access_token");
+    setToken(token);
     if (imgName) {
       const getImages = async () => {
         setLoading(true);
+        console.log(token);
         try {
-          const request = await fetch(`${baseUrl}/api/compare/${imgName}`);
+          const request = await fetch(`${baseUrl}/api/compare/${imgName}`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
           const response = await request.json();
           if (request.status === 200) {
             console.log(response);
@@ -41,6 +49,7 @@ export default function Compare() {
             setLoading(false);
             showToastMessage(response.message);
             console.log(response.error);
+            console.log(response);
             setMessage("Error :/, please try again.");
           }
         } catch (e) {
@@ -52,7 +61,7 @@ export default function Compare() {
       };
       getImages();
     }
-  }, [imgName]);
+  }, [imgName, token]);
 
   if (!img) {
     return (
@@ -155,6 +164,7 @@ export default function Compare() {
                         state: {
                           generatedImg: img,
                           selectedImg: null,
+                          testimonyDescription,
                         },
                       })
                     }
@@ -206,6 +216,7 @@ export default function Compare() {
                       state: {
                         generatedImg: img,
                         selectedImg: `${baseUrl}/static/imgs/${imgs[imgId]}`,
+                        testimonyDescription,
                       },
                     })
                   }
@@ -221,6 +232,7 @@ export default function Compare() {
                       state: {
                         generatedImg: img,
                         selectedImg: null,
+                        testimonyDescription,
                       },
                     })
                   }

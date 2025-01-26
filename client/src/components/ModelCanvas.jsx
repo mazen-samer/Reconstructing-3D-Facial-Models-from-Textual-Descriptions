@@ -3,36 +3,26 @@ import { Canvas } from "@react-three/fiber";
 import { Stage, PresentationControls, OrbitControls } from "@react-three/drei";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { Box3, Vector3 } from "three";
-import { baseUrl } from "../constants/baseUrl";
 
 function Model({ obj }) {
   return obj ? <primitive object={obj} scale={0.007} /> : null;
 }
 
-export default function ModelCanvas({ id }) {
+export default function ModelCanvas({ objText }) {
   const [obj, setObj] = useState(null);
+
   const [cameraPosition, setCameraPosition] = useState([0, 0, 500]);
   const canvasSize = [400, 400];
   useEffect(() => {
-    const fetchObj = async () => {
-      try {
-        const response = await fetch(`${baseUrl}/static/3dobjs/1`);
-        const objText = await response.text();
-        const loader = new OBJLoader();
-        const loadedObj = loader.parse(objText);
-        const boundingBox = new Box3().setFromObject(loadedObj);
-        const center = boundingBox.getCenter(new Vector3());
+    const loader = new OBJLoader();
+    const loadedObj = loader.parse(objText);
+    const boundingBox = new Box3().setFromObject(loadedObj);
+    const center = boundingBox.getCenter(new Vector3());
 
-        loadedObj.position.sub(center);
+    loadedObj.position.sub(center);
 
-        setObj(loadedObj);
-      } catch (error) {
-        console.error("Error loading OBJ file:", error);
-      }
-    };
-
-    fetchObj();
-  }, []);
+    setObj(loadedObj);
+  }, [objText]);
 
   useEffect(() => {
     if (obj) {
@@ -59,9 +49,9 @@ export default function ModelCanvas({ id }) {
         height: canvasSize[1],
       }}
     >
-      <directionalLight position={[5, 5, 20]} intensity={0.8} />
+      <directionalLight position={[5, 5, 20]} intensity={2} />
       <PresentationControls speed={1}>
-        <Stage environment={"studio"}>
+        <Stage environment={""}>
           <Model obj={obj} />
         </Stage>
         <OrbitControls enableZoom />

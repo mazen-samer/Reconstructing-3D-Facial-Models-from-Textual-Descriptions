@@ -10,7 +10,6 @@ const { Title, Text } = Typography;
 
 export default function SignIn() {
   const [loading, setLoading] = useState(false);
-  // const [message, setMessage] = useState("");
   const { changeUser } = useContext(UserContext);
   const navigate = useNavigate();
 
@@ -27,9 +26,10 @@ export default function SignIn() {
         );
         const response = await request.json();
         if (request.status === 200) {
-          console.log(response.employee);
+          console.log(response);
           setLoading(false);
           changeUser(response.employee, response.incident);
+          sessionStorage.setItem("access_token", response.access_token);
           navigate("/");
         } else {
           setLoading(false);

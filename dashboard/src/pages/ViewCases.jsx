@@ -66,8 +66,13 @@ export default function ViewCases() {
                 </Typography>
               </CardContent>
               <CardActions>
-                <Button component={Link} to="/" variant="outlined" size="small">
-                  Learn More
+                <Button
+                  component={Link}
+                  to={`/incident/${incident.id}`}
+                  variant="outlined"
+                  size="small"
+                >
+                  View more details
                 </Button>
                 <Link></Link>
               </CardActions>

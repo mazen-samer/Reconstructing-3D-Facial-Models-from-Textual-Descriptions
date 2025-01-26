@@ -12,4 +12,9 @@ def get_imgs(img_name: str):
     return list(dfs[0].identity.str.split("/").str[-1])
 
 
-# print(get_imgs("employee-1.png"))
+def main():
+    print(get_imgs("generated-1-1.png"))
+
+
+if __name__ == "__main__":
+    main()
