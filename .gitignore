@@ -16,9 +16,6 @@ node_modules/
 */node_modules/
 
 requirements.txt
-server/static/imgs
-server/static/3dobjs
-server/static/generated
 server/static/imgs/representations_vgg_face.pkl
 PRPipe/__pycache__/
 PRPipe/3dobjs/
